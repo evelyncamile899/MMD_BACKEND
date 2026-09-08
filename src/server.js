@@ -9,9 +9,31 @@ import userRoutes from './routes/users.js';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173']
-}));
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN
+      .split(',')
+      .map((origin) => origin.trim())
+  : [];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error(`Origem não permitida pelo CORS: ${origin}`)
+      );
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.get('/api/health', (req, res) => {
